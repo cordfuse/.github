@@ -74,6 +74,25 @@ function generateNodes(seed = 42): Node[] {
   return nodes
 }
 
+// Square layout — uniform distribution across the full canvas, with a small
+// overscan margin so synapses extend off the edges (matches the org-avatar
+// aesthetic where lines run off-frame).
+function generateSquareNodes(seed = 7): Node[] {
+  const rand = rng(seed)
+  const nodes: Node[] = []
+  const SQUARE_NODE_COUNT = NODE_COUNT + 15  // denser network for full-bleed
+  const overscan = 30
+  let attempts = 0
+  while (nodes.length < SQUARE_NODE_COUNT && attempts < SQUARE_NODE_COUNT * 20) {
+    attempts++
+    const x = -overscan + rand() * (VIEW + overscan * 2)
+    const y = -overscan + rand() * (VIEW + overscan * 2)
+    if (nodes.some(n => Math.hypot(n.x - x, n.y - y) < 22)) continue
+    nodes.push({ x, y, accent: rand() < ACCENT_NODE_FRACTION })
+  }
+  return nodes
+}
+
 function buildPlexus(nodes: Node[]): string {
   const links: string[] = []
   for (let i = 0; i < nodes.length; i++) {
@@ -160,24 +179,75 @@ function escapeXml(s: string): string {
   return s.replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&apos;', '"': '&quot;' }[c]!))
 }
 
+// ── Square SVG template (full-bleed, no circular clip) ───────────────────────
+
+function buildSquareSvg(v: Variant, plexus: string): string {
+  const baseSize = v.glyph.length <= 3 ? 240 : 200  // larger glyph since more canvas to work with
+  const fontWeight = 700
+  const fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}" width="${VIEW}" height="${VIEW}">
+  <defs>
+    <clipPath id="squareClip">
+      <rect x="0" y="0" width="${VIEW}" height="${VIEW}"/>
+    </clipPath>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="nodeGlow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#squareClip)">
+    <rect x="0" y="0" width="${VIEW}" height="${VIEW}" fill="#0d1320"/>
+    <g opacity="0.95">
+      ${plexus}
+    </g>
+    <text x="${CENTER}" y="${CENTER}"
+          text-anchor="middle" dominant-baseline="central"
+          font-family='${fontFamily}' font-size="${baseSize}" font-weight="${fontWeight}"
+          fill="${v.color}" filter="url(#glow)">${escapeXml(v.glyph)}</text>
+  </g>
+</svg>
+`
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const outDir = join(import.meta.dir, 'svg')
 mkdirSync(outDir, { recursive: true })
 
-const nodes  = generateNodes(42)
-const plexus = buildPlexus(nodes)
+const circleNodes  = generateNodes(42)
+const circlePlexus = buildPlexus(circleNodes)
+const squareNodes  = generateSquareNodes(7)
+const squarePlexus = buildPlexus(squareNodes)
 
 for (const v of VARIANTS) {
-  // Full mark — used for 180+ px renders (Electron, PWA, apple-touch, master)
+  // Full circle mark — used for 180+ px renders (Electron, PWA, apple-touch)
   const fullPath = join(outDir, `${v.id}.svg`)
-  writeFileSync(fullPath, buildSvg(v, plexus, { noPlexus: false }), 'utf8')
+  writeFileSync(fullPath, buildSvg(v, circlePlexus, { noPlexus: false }), 'utf8')
   console.log(`  wrote ${fullPath}`)
 
   // Favicon mark — no plexus, larger glyph; for ≤32 px renders + browser favicon.svg
   const favPath = join(outDir, `${v.id}-favicon.svg`)
-  writeFileSync(favPath, buildSvg(v, plexus, { noPlexus: true }), 'utf8')
+  writeFileSync(favPath, buildSvg(v, circlePlexus, { noPlexus: true }), 'utf8')
   console.log(`  wrote ${favPath}`)
+
+  // Square mark — full-bleed, no circular clip; for GitHub social previews,
+  // org avatars, OpenGraph cards, and any context that wants a tile.
+  const squarePath = join(outDir, `${v.id}-square.svg`)
+  writeFileSync(squarePath, buildSquareSvg(v, squarePlexus), 'utf8')
+  console.log(`  wrote ${squarePath}`)
 }
 
-console.log(`\n${VARIANTS.length * 2} SVGs generated in ${outDir}/  (full + favicon variants)`)
+console.log(`\n${VARIANTS.length * 3} SVGs generated in ${outDir}/  (circle + favicon + square)`)
