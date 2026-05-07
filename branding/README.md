@@ -11,6 +11,7 @@ branding/
   generate.ts                       # SVG generator (Bun)
   svg/<product>.svg                 # vector source — one per product
   png/<product>-{192,512,1024}.png  # rasterized variants
+  banner/cordfuse-banner-*.png      # org-level wide banners (subreddit, social, headers)
 ```
 
 Filename convention: lowercase product slug (matches the GitHub repo name) +
@@ -51,7 +52,18 @@ Reference raw URLs in READMEs, manifests, etc.:
 ```
 https://raw.githubusercontent.com/cordfuse/.github/main/branding/png/<product>-512.png
 https://raw.githubusercontent.com/cordfuse/.github/main/branding/svg/<product>.svg
+https://raw.githubusercontent.com/cordfuse/.github/main/branding/banner/cordfuse-banner-desktop.png
 ```
+
+## Banner
+
+Org-level cordfuse banner (plexus + "cordfuse — tools for the AI agent era"):
+
+- `branding/banner/cordfuse-banner-desktop.png` — wide, used on the `/r/cordfuse` subreddit header
+- `branding/banner/cordfuse-banner-mobile.png` — narrower variant for mobile contexts
+
+Currently used only on `/r/cordfuse`. Per-product banners (with each product's
+`{Nn}` glyph + name) are not generated yet — extend `generate.ts` if/when needed.
 
 For app-side consumption (Electron icons, PWA manifests, favicons), copy the
 relevant size into the consuming app at the path/name that tooling expects —
