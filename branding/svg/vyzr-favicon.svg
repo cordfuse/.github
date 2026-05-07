@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="252"/>
+    </clipPath>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="65%">
+      <stop offset="0%"   stop-color="#222a3a"/>
+      <stop offset="100%" stop-color="#0f1421"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="nodeGlow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#circleClip)">
+    <circle cx="256" cy="256" r="252" fill="url(#bgGradient)"/>
+    
+    <text x="256" y="256"
+          text-anchor="middle" dominant-baseline="central"
+          font-family='system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' font-size="213" font-weight="700"
+          fill="#22d3ee" filter="url(#glow)">{Vz}</text>
+  </g>
+  <circle cx="256" cy="256" r="252" fill="none" stroke="#2a3445" stroke-width="2"/>
+</svg>

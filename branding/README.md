@@ -8,11 +8,27 @@ plus six product marks, each rendered from a single SVG via deterministic plexus
 
 ```
 branding/
-  generate.ts                       # SVG generator (Bun)
-  svg/<product>.svg                 # vector source — one per product
-  png/<product>-{192,512,1024}.png  # rasterized variants
-  banner/cordfuse-banner-*.png      # org-level wide banners (subreddit, social, headers)
+  generate.ts                                # SVG generator (Bun)
+  svg/<product>.svg                          # full mark — circle + plexus + glyph
+  svg/<product>-favicon.svg                  # glyph-only mark — for ≤32 px renders
+  png/<product>-{192,512,1024}.png           # full mark, raster
+  png/<product>-favicon-{16,32}.png          # favicon mark, raster
+  png/vyzr-180.png                           # apple-touch-icon (vyzr only, on demand)
+  banner/cordfuse-banner-*.png               # org-level wide banners (subreddit, social, headers)
 ```
+
+## Two SVG variants per product
+
+The plexus that pops at 1024 px reads as noise at 32 px — the glyph gets lost
+behind the network. So each product ships **two** marks:
+
+| Variant | When to use | What it has |
+|---|---|---|
+| `<product>.svg` | Electron icons, PWA splash/home, apple-touch, README headers, anywhere ≥ 180 px | Navy circle, dense plexus, large glowing accent nodes, glyph |
+| `<product>-favicon.svg` | Browser favicon (`<link rel="icon" type="image/svg+xml">`), 16 / 32 px raster | Navy circle + glyph only — no plexus |
+
+Pick the variant by **render size**, not by file type. A 180 px PNG should
+come from the full SVG; a 16 px PNG should come from the favicon SVG.
 
 Filename convention: lowercase product slug (matches the GitHub repo name) +
 size suffix. No spaces, no underscores, hyphen-separated.
@@ -36,13 +52,23 @@ size suffix. No spaces, no underscores, hyphen-separated.
 bun run generate.ts
 
 # Re-render PNGs from current SVGs (requires librsvg: brew install librsvg)
-mkdir -p png
+rm -f png/*.png
 for f in svg/*.svg; do
   name=$(basename "$f" .svg)
-  rsvg-convert -w 1024 "$f" -o "png/${name}-1024.png"
-  rsvg-convert -w 512  "$f" -o "png/${name}-512.png"
-  rsvg-convert -w 192  "$f" -o "png/${name}-192.png"
+  case "$name" in
+    *-favicon)
+      rsvg-convert -w 32 "$f" -o "png/${name}-32.png"
+      rsvg-convert -w 16 "$f" -o "png/${name}-16.png"
+      ;;
+    *)
+      rsvg-convert -w 1024 "$f" -o "png/${name}-1024.png"
+      rsvg-convert -w 512  "$f" -o "png/${name}-512.png"
+      rsvg-convert -w 192  "$f" -o "png/${name}-192.png"
+      ;;
+  esac
 done
+# Vyzr also needs apple-touch (180 px, full plexus)
+rsvg-convert -w 180 svg/vyzr.svg -o png/vyzr-180.png
 ```
 
 ## Consuming from another repo

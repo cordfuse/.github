@@ -37,9 +37,9 @@ const VARIANTS: Variant[] = [
 const VIEW = 512                  // SVG viewBox dimensions
 const CENTER = VIEW / 2
 const RADIUS = VIEW / 2 - 4       // circle frame inner radius
-const NODE_COUNT = 38
-const LINK_DIST = 130             // connect nodes within this many px
-const ACCENT_NODE_FRACTION = 0.35 // ~ 35 % of nodes glow accent-colored
+const NODE_COUNT = 55
+const LINK_DIST = 135             // connect nodes within this many px
+const ACCENT_NODE_FRACTION = 0.45 // ~ 45 % of nodes glow accent-colored
 
 // Tiny seeded PRNG (mulberry32) for deterministic plexus across runs.
 function rng(seed: number) {
@@ -67,7 +67,7 @@ function generateNodes(seed = 42): Node[] {
     const y   = CENTER + Math.sin(ang) * r
 
     // Reject if too close to an existing node (avoid clumps)
-    if (nodes.some(n => Math.hypot(n.x - x, n.y - y) < 30)) continue
+    if (nodes.some(n => Math.hypot(n.x - x, n.y - y) < 24)) continue
 
     nodes.push({ x, y, accent: rand() < ACCENT_NODE_FRACTION })
   }
@@ -80,19 +80,25 @@ function buildPlexus(nodes: Node[]): string {
     for (let j = i + 1; j < nodes.length; j++) {
       const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y)
       if (d > LINK_DIST) continue
-      const opacity = (1 - d / LINK_DIST) * 0.45 + 0.05
+      // Match the org-avatar aesthetic: bright, present synapses that anchor
+      // the network as a real visual element, not subtle background noise.
+      const opacity = (1 - d / LINK_DIST) * 0.75 + 0.32
       links.push(
         `<line x1="${nodes[i].x.toFixed(1)}" y1="${nodes[i].y.toFixed(1)}" ` +
         `x2="${nodes[j].x.toFixed(1)}" y2="${nodes[j].y.toFixed(1)}" ` +
-        `stroke="#ffffff" stroke-width="0.6" stroke-opacity="${opacity.toFixed(3)}"/>`
+        `stroke="#d8dde6" stroke-width="2.0" stroke-opacity="${opacity.toFixed(3)}"/>`
       )
     }
   }
 
+  // Match the org-avatar: large, saturated red accent nodes that read as the
+  // primary visual rhythm, with paler grey nodes filling the gaps.
   const dots = nodes.map(n => {
-    const fill = n.accent ? '#ff5555' : '#5a6577'
-    const r    = n.accent ? 2.4 : 1.6
-    return `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r}" fill="${fill}"/>`
+    if (n.accent) {
+      return `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="5.5" ` +
+             `fill="#ff5555" filter="url(#nodeGlow)"/>`
+    }
+    return `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="3.0" fill="#a3acba"/>`
   })
 
   return [...links, ...dots].join('\n      ')
@@ -100,11 +106,16 @@ function buildPlexus(nodes: Node[]): string {
 
 // ── SVG template ──────────────────────────────────────────────────────────────
 
-function buildSvg(v: Variant, plexus: string): string {
-  // Glyph sizing: shorter strings get bigger font.
-  const fontSize = v.glyph.length <= 3 ? 200 : 170
+function buildSvg(v: Variant, plexus: string, opts: { noPlexus?: boolean } = {}): string {
+  // Glyph sizing — shorter strings get bigger font; favicon variant gets a
+  // larger glyph still since there's no plexus competing for space.
+  const baseSize = v.glyph.length <= 3 ? 200 : 170
+  const fontSize = opts.noPlexus ? Math.round(baseSize * 1.25) : baseSize
   const fontWeight = 700
   const fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  const plexusBlock = opts.noPlexus ? '' : `<g opacity="0.9">
+      ${plexus}
+    </g>`
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}" width="${VIEW}" height="${VIEW}">
@@ -123,13 +134,18 @@ function buildSvg(v: Variant, plexus: string): string {
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="nodeGlow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
   <g clip-path="url(#circleClip)">
     <circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS}" fill="url(#bgGradient)"/>
-    <g opacity="0.9">
-      ${plexus}
-    </g>
+    ${plexusBlock}
     <text x="${CENTER}" y="${CENTER}"
           text-anchor="middle" dominant-baseline="central"
           font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}"
@@ -153,9 +169,15 @@ const nodes  = generateNodes(42)
 const plexus = buildPlexus(nodes)
 
 for (const v of VARIANTS) {
-  const path = join(outDir, `${v.id}.svg`)
-  writeFileSync(path, buildSvg(v, plexus), 'utf8')
-  console.log(`  wrote ${path}`)
+  // Full mark — used for 180+ px renders (Electron, PWA, apple-touch, master)
+  const fullPath = join(outDir, `${v.id}.svg`)
+  writeFileSync(fullPath, buildSvg(v, plexus, { noPlexus: false }), 'utf8')
+  console.log(`  wrote ${fullPath}`)
+
+  // Favicon mark — no plexus, larger glyph; for ≤32 px renders + browser favicon.svg
+  const favPath = join(outDir, `${v.id}-favicon.svg`)
+  writeFileSync(favPath, buildSvg(v, plexus, { noPlexus: true }), 'utf8')
+  console.log(`  wrote ${favPath}`)
 }
 
-console.log(`\n${VARIANTS.length} SVGs generated in ${outDir}/`)
+console.log(`\n${VARIANTS.length * 2} SVGs generated in ${outDir}/  (full + favicon variants)`)
