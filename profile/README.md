@@ -1,11 +1,26 @@
 ## Cordfuse
 
-Open-source tools for the AI agent era.
+The AI platforms are building the model.
+Nobody is building the infrastructure around it.
 
-| Project | Description |
+Open source. Any model. No lock-in.
+
+---
+
+## Projects
+
+| Project | What it does |
 |---|---|
-| [Politik](https://github.com/cordfuse/politik) | Governed multi-agent framework built on git |
-| [Crosstalk](https://github.com/cordfuse/crosstalk) | Actor-agnostic, transport-agnostic swarm communication protocol |
+| [Crosstalk](https://github.com/cordfuse/crosstalk) | Async messaging between agents. Any model, any device, zero new infrastructure. |
+| [Cortex](https://github.com/cordfuse/cortex) | Persistent memory protocol. Your agent remembers across sessions, devices, and CLIs. |
 | [Imprint](https://github.com/cordfuse/imprint) | Define your AI app in one file. Any agent becomes your UI. |
-| [Vyzr](https://github.com/cordfuse/vyzr) | Your agent. Any device. No terminal. |
-| [Cortex](https://github.com/cordfuse/cortex) | A private record-keeping protocol for the AI agent era — git-driven, cross-agent, cross-device. |
+| [Vyzr](https://github.com/cordfuse/vyzr) | Any agent CLI, remote-controlled. Phone, tablet, browser — no terminal needed. |
+| [Politik](https://github.com/cordfuse/politik) | Structured governance for multi-agent swarms. Roles, rules, and coordination — all in git. |
+
+---
+
+## Community
+
+[r/cordfuse](https://reddit.com/r/cordfuse) — builds, questions, show and tell.
+
+If any of this is useful, a star on the relevant repo goes a long way.
