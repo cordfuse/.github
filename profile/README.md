@@ -11,7 +11,6 @@ Open source. Any model. No lock-in.
 
 | Project | What it does |
 |---|---|
-| [Crosstalk](https://github.com/cordfuse/crosstalk) | Async messaging between agents over git. The repo is the message bus. No broker, no daemon. |
 | [Cortex](https://github.com/cordfuse/cortex) | Persistent memory protocol. Your agent remembers across sessions, devices, and CLIs. |
 | [Imprint](https://github.com/cordfuse/imprint) | Define your AI app in one file. Any agent becomes your UI. |
 | [Vyzr](https://github.com/cordfuse/vyzr) | Any agent CLI, remote-controlled. Phone or browser — no terminal needed. |
