@@ -15,6 +15,7 @@ Open source. Any model. No lock-in.
 | [Cortex](https://github.com/cordfuse/cortex) | Persistent memory protocol. Your agent remembers across sessions, devices, and CLIs. |
 | [Imprint](https://github.com/cordfuse/imprint) | Define your AI app in one file. Any agent becomes your UI. |
 | [Vyzr](https://github.com/cordfuse/vyzr) | Any agent CLI, remote-controlled. Phone or browser — no terminal needed. |
+| [llmux](https://github.com/cordfuse/llmux) | Every agent CLI as a named tmux session. One daemon — drive from your shell, your script, or your phone. |
 
 ---
 
